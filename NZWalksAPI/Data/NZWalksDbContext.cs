@@ -5,7 +5,7 @@ namespace NZWalksAPI.Data
 {
     public class NZWalksDbContext : DbContext 
     {
-        public NZWalksDbContext(DbContextOptions<NZWalksAuthDbContext> dbContextOptions) : base(dbContextOptions)
+        public NZWalksDbContext(DbContextOptions<NZWalksDbContext> dbContextOptions) : base(dbContextOptions)
         {
             
         }
@@ -13,6 +13,7 @@ namespace NZWalksAPI.Data
         public DbSet<Difficulty> Difficulties { get; set; }
         public DbSet<Region> Regions { get; set; }
         public DbSet<Walk> Walks { get; set; }
+        public DbSet<Image> Images { get; set; } //Step 1 before create model, after that is update console...
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
