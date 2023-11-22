@@ -9,16 +9,28 @@ using NZWalksAPI.Data;
 using NZWalksAPI.Mapping;
 using NZWalksAPI.Repository;
 using System.Text;
+using Serilog;
+using NZWalksAPI.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Add services to the container. **
+var logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .WriteTo.File("Logs/NzWalks_Log.txt", rollingInterval:  RollingInterval.Minute)
+    .MinimumLevel.Warning()
+    .CreateLogger();
+    //.MinimumLevel.Information()
+
+builder.Logging.ClearProviders();
+builder.Logging.AddSerilog(logger);
+
 builder.Services.AddControllers();
 builder.Services.AddHttpContextAccessor(); // To create image url 
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-//Configuration to add authorization to swagger
+//Configuration to add authorization to swagger **
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "NZ Walks Api", Version = "v1" });
@@ -30,7 +42,7 @@ builder.Services.AddSwaggerGen(options =>
         Scheme = JwtBearerDefaults.AuthenticationScheme
     });
 
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement  //**
     {
         {
             new OpenApiSecurityScheme
@@ -49,39 +61,39 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-// Injection of DbContext Dta
+// Injection of DbContext Dta **
 builder.Services.AddDbContext<NZWalksDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("NZWalksConnectionString"));
 });
 
-// Injection of DbContext Dta author
+// Injection of DbContext Dta author **
 builder.Services.AddDbContext<NZWalksAuthDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("NZWalkAuthConnectionString"));
 });
 
 
-//Controller registration
+//Controller registration **
 builder.Services.AddScoped<IRegionRepository, SQLRegionRepository>();
 builder.Services.AddScoped<IWalkRepository, SQLWalkRepository>();
 builder.Services.AddScoped<ITokenRepository, TokenRepository>();
 builder.Services.AddScoped<IImageRepository, LocalImageRepository>();
 
-//Token inyection
+//Token inyection **
 builder.Services.AddScoped<ITokenRepository, TokenRepository>();
 
 //Injection mapper
 builder.Services.AddAutoMapper(typeof(AutoMapperProfiles));
 
-//  Injection of identity packages
+//  Injection of identity packages **
 builder.Services.AddIdentityCore<IdentityUser>()
     .AddRoles<IdentityRole>()
     .AddTokenProvider<DataProtectorTokenProvider<IdentityUser>>("NZWalks")
     .AddEntityFrameworkStores<NZWalksAuthDbContext>()
     .AddDefaultTokenProviders();
 
-builder.Services.Configure<IdentityOptions>(options =>
+builder.Services.Configure<IdentityOptions>(options => //**
 {
     options.Password.RequireDigit = false;
     options.Password.RequireLowercase = false;
@@ -93,7 +105,7 @@ builder.Services.Configure<IdentityOptions>(options =>
 
 
 
-//Authentication registration
+//Authentication registration **
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
 options.TokenValidationParameters = new TokenValidationParameters
 {
@@ -116,12 +128,15 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+//  Exception middle ware **
+app.UseMiddleware<ExceptionHandlerMiddleware>();
+
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-//  Serving static files to show images
+//  Serving static files to show images **
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "Images")),

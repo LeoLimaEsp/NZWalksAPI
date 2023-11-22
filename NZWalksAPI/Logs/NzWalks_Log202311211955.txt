@@ -1,0 +1,2 @@
+2023-11-21 19:55:02.482 -06:00 [WRN] This is a warning log
+2023-11-21 19:55:02.603 -06:00 [ERR] This is a error log
